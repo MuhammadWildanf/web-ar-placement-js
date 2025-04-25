@@ -2,59 +2,127 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Web AR Furniture - Drag Kursi</title>
+    <title>Web AR Furniture</title>
     <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
     <script>
-      // Komponen custom untuk drag pakai touch/mouse
-      AFRAME.registerComponent("drag-move", {
-        init: function () {
-          const el = this.el;
-          let isDragging = false;
-          let offset = new THREE.Vector3();
-
-          const sceneEl = document.querySelector("a-scene");
-          const camera = sceneEl.camera;
-
-          // Touch start
-          el.addEventListener("mousedown", startDrag);
-          el.addEventListener("touchstart", startDrag);
-
-          // Touch move
-          window.addEventListener("mousemove", dragMove);
-          window.addEventListener("touchmove", dragMove);
-
-          // Touch end
-          window.addEventListener("mouseup", stopDrag);
-          window.addEventListener("touchend", stopDrag);
-
-          function startDrag(evt) {
-            isDragging = true;
-          }
-
-          function dragMove(evt) {
-            if (!isDragging) return;
-
-            let clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-            let clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-
-            const mouse = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
-
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            // Proyeksikan ke bidang datar (lantai di y = 0)
-            const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-            const intersection = new THREE.Vector3();
-            raycaster.ray.intersectPlane(planeY, intersection);
-
-            el.object3D.position.set(intersection.x, 0, intersection.z);
-          }
-
-          function stopDrag(evt) {
-            isDragging = false;
-          }
+      // Komponen untuk rotasi objek
+      AFRAME.registerComponent("rotate-object", {
+        schema: {
+          rotateSpeed: { type: "number", default: 1 }
         },
+        init: function () {
+          this.dragging = false;
+          this.startX = 0;
+          this.rotationY = 0;
+          const sceneEl = this.el.sceneEl;
+          const degToRad = THREE.MathUtils.degToRad;
+
+          const onStart = (x) => {
+            this.dragging = true;
+            this.startX = x;
+          };
+
+          const onMove = (x) => {
+            if (!this.dragging) return;
+            const deltaX = x - this.startX;
+            this.rotationY += deltaX * this.data.rotateSpeed;
+            this.el.object3D.rotation.y = degToRad(this.rotationY);
+            this.startX = x;
+          };
+
+          const onEnd = () => {
+            this.dragging = false;
+          };
+
+          // Mouse events
+          sceneEl.addEventListener("mousedown", (e) => {
+            if (e.button === 0) { // Left click for rotation
+              onStart(e.screenX);
+            }
+          });
+          sceneEl.addEventListener("mousemove", (e) => {
+            if (this.dragging) {
+              onMove(e.screenX);
+            }
+          });
+          sceneEl.addEventListener("mouseup", onEnd);
+
+          // Touch events
+          sceneEl.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 1) {
+              onStart(e.touches[0].screenX);
+            }
+          });
+          sceneEl.addEventListener("touchmove", (e) => {
+            if (e.touches.length === 1 && this.dragging) {
+              onMove(e.touches[0].screenX);
+            }
+          });
+          sceneEl.addEventListener("touchend", onEnd);
+        }
+      });
+
+      // Komponen untuk perpindahan objek
+      AFRAME.registerComponent("move-object", {
+        schema: {
+          moveSpeed: { type: "number", default: 0.005 }
+        },
+        init: function () {
+          this.dragging = false;
+          this.startX = 0;
+          this.startY = 0;
+          this.position = this.el.object3D.position;
+          const sceneEl = this.el.sceneEl;
+
+          const onStart = (x, y) => {
+            this.dragging = true;
+            this.startX = x;
+            this.startY = y;
+          };
+
+          const onMove = (x, y) => {
+            if (!this.dragging) return;
+            const deltaX = x - this.startX;
+            const deltaY = y - this.startY;
+
+            this.position.x += deltaX * this.data.moveSpeed;
+            this.position.z += deltaY * this.data.moveSpeed;
+
+            this.startX = x;
+            this.startY = y;
+          };
+
+          const onEnd = () => {
+            this.dragging = false;
+          };
+
+          // Mouse events
+          sceneEl.addEventListener("mousedown", (e) => {
+            if (e.button === 2) { // Right click for movement
+              onStart(e.screenX, e.screenY);
+            }
+          });
+          sceneEl.addEventListener("mousemove", (e) => {
+            if (this.dragging) {
+              onMove(e.screenX, e.screenY);
+            }
+          });
+          sceneEl.addEventListener("mouseup", onEnd);
+
+          // Touch events - menggunakan dua jari untuk perpindahan
+          sceneEl.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 2) {
+              onStart(e.touches[0].screenX, e.touches[0].screenY);
+            }
+          });
+          sceneEl.addEventListener("touchmove", (e) => {
+            if (e.touches.length === 2 && this.dragging) {
+              onMove(e.touches[0].screenX, e.touches[0].screenY);
+            }
+          });
+          sceneEl.addEventListener("touchend", onEnd);
+        }
       });
     </script>
   </head>
@@ -64,7 +132,13 @@
         <a-asset-item id="kursi" src="model/kursi.glb"></a-asset-item>
       </a-assets>
 
-      <a-entity id="kursiEntity" gltf-model="#kursi" position="0 0 -2" scale="0.5 0.5 0.5" rotation="0 180 0" drag-move></a-entity>
+      <a-entity 
+        gltf-model="#kursi" 
+        position="0 0 -2" 
+        scale="0.5 0.5 0.5" 
+        rotate-object="rotateSpeed: 0.5"
+        move-object="moveSpeed: 0.005">
+      </a-entity>
 
       <a-camera position="0 0 0" look-controls></a-camera>
     </a-scene>
