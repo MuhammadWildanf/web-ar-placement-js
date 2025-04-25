@@ -2,9 +2,61 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Web AR Furniture</title>
+    <title>Web AR Furniture - Drag Kursi</title>
     <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+    <script>
+      // Komponen custom untuk drag pakai touch/mouse
+      AFRAME.registerComponent("drag-move", {
+        init: function () {
+          const el = this.el;
+          let isDragging = false;
+          let offset = new THREE.Vector3();
+
+          const sceneEl = document.querySelector("a-scene");
+          const camera = sceneEl.camera;
+
+          // Touch start
+          el.addEventListener("mousedown", startDrag);
+          el.addEventListener("touchstart", startDrag);
+
+          // Touch move
+          window.addEventListener("mousemove", dragMove);
+          window.addEventListener("touchmove", dragMove);
+
+          // Touch end
+          window.addEventListener("mouseup", stopDrag);
+          window.addEventListener("touchend", stopDrag);
+
+          function startDrag(evt) {
+            isDragging = true;
+          }
+
+          function dragMove(evt) {
+            if (!isDragging) return;
+
+            let clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            let clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+
+            const mouse = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            // Proyeksikan ke bidang datar (lantai di y = 0)
+            const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const intersection = new THREE.Vector3();
+            raycaster.ray.intersectPlane(planeY, intersection);
+
+            el.object3D.position.set(intersection.x, 0, intersection.z);
+          }
+
+          function stopDrag(evt) {
+            isDragging = false;
+          }
+        },
+      });
+    </script>
   </head>
   <body style="margin: 0; overflow: hidden">
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
@@ -12,7 +64,7 @@
         <a-asset-item id="kursi" src="model/kursi.glb"></a-asset-item>
       </a-assets>
 
-      <a-entity gltf-model="#kursi" position="0 0 -2" scale="0.5 0.5 0.5" rotation="0 0 0"></a-entity>
+      <a-entity id="kursiEntity" gltf-model="#kursi" position="0 0 -2" scale="0.5 0.5 0.5" rotation="0 180 0" drag-move></a-entity>
 
       <a-camera position="0 0 0" look-controls></a-camera>
     </a-scene>
