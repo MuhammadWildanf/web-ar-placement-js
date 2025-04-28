@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Marker Based AR Furniture</title>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #arjs-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <a-scene
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono; matrixCodeType: 3x3; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480; sourceWidth: 640; sourceHeight: 480; displayWidth: 640; displayHeight: 480;"
+    >
+      <a-assets>
+        <a-asset-item id="kursi" src="model/kursi.glb"></a-asset-item>
+      </a-assets>
+
+      <a-assets>
+        <a-asset-item id="kursi" src="model/kursi.glb"></a-asset-item>
+        <video id="myVideo" src="video/contoh.mp4" preload="auto" crossorigin="anonymous"></video>
+      </a-assets>
+
+      <!-- Custom Marker definition -->
+      <a-marker type="pattern" preset="custom" url="marker/pattern.patt" raycaster="objects: .clickable" emitevents="true" id="marker">
+        <a-entity gltf-model="#kursi" position="0 0 0" scale="0.5 0.5 0.5" rotation="0 0 0" class="clickable"></a-entity>
+      </a-marker>
+
+      <!-- <a-marker type="pattern" preset="custom" url="marker/pattern.patt" raycaster="objects: .clickable" emitevents="true" id="marker"> -->
+      <!-- <a-entity gltf-model="#kursi" position="0 0 0" scale="0.5 0.5 0.5" rotation="0 0 0" class="clickable"></a-entity> -->
+      <!-- <a-video src="video/videoplayback.mp4" width="1" height="0.6" position="0 0.5 0" rotation="-90 0 0" autoplay="true" loop="true" class="clickable"></a-video> -->
+      <!-- </a-marker> -->
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      // Debug information
+      const marker = document.querySelector("#marker");
+      marker.addEventListener("markerFound", () => {
+        console.log("Marker ditemukan!");
+      });
+      marker.addEventListener("markerLost", () => {
+        console.log("Marker hilang!");
+      });
+
+      // Camera debug
+      const scene = document.querySelector("a-scene");
+      scene.addEventListener("camera-init", () => {
+        console.log("Kamera berhasil diinisialisasi!");
+      });
+      scene.addEventListener("camera-error", (error) => {
+        console.error("Error kamera:", error);
+      });
+    </script>
+  </body>
+</html>

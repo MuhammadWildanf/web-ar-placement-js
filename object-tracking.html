@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Object Tracking AR</title>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #arjs-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480;">
+      <a-assets>
+        <a-asset-item id="kursi" src="model/kursi.glb"></a-asset-item>
+      </a-assets>
+
+      <!-- NFT Marker definition -->
+      <a-nft
+        type="nft"
+        url="nft/object"
+        smooth="true"
+        smoothCount="5"
+        smoothTolerance="0.01"
+        smoothThreshold="5"
+        raycaster="objects: .clickable"
+        emitevents="true"
+        id="nft">
+        <a-entity gltf-model="#kursi" position="0 0 0" scale="0.5 0.5 0.5" rotation="0 0 0" class="clickable"></a-entity>
+      </a-nft>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      // Debug information
+      const nft = document.querySelector('#nft');
+      nft.addEventListener('markerFound', () => {
+        console.log('Benda ditemukan!');
+      });
+      nft.addEventListener('markerLost', () => {
+        console.log('Benda hilang!');
+      });
+    </script>
+  </body>
+</html> 
