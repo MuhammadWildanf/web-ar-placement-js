@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web AR Placement - Furniture</title>
+    <title>Simple Three.js Model Viewer</title>
     <style>
       body {
         margin: 0;
@@ -23,97 +23,69 @@
     </style>
   </head>
   <body>
-    <button id="startAR">Start AR</button>
+    <button id="startAR">Start Viewer</button>
 
     <script type="module">
       import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js";
       import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/loaders/GLTFLoader.js";
 
-      let camera, scene, renderer;
-      let controller;
-      let reticle;
-      let model;
+      let scene, camera, renderer, model;
 
       init();
 
       function init() {
         scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
 
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 2;
 
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        document.getElementById("startAR").addEventListener("click", async () => {
-          const sessionInit = { requiredFeatures: ["hit-test"] };
-          const session = await navigator.xr.requestSession("immersive-ar", sessionInit);
-          renderer.xr.setSession(session);
-          document.getElementById("startAR").style.display = "none"; // Hilangkan tombol Start AR
-        });
-
-        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-        light.position.set(0.5, 1, 0.25);
+        const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+        light.position.set(0, 20, 0);
         scene.add(light);
 
-        const ringGeometry = new THREE.RingGeometry(0.07, 0.09, 32).rotateX(-Math.PI / 2);
-        const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        reticle = new THREE.Mesh(ringGeometry, ringMaterial);
-        reticle.matrixAutoUpdate = false;
-        reticle.visible = false;
-        scene.add(reticle);
+        window.addEventListener("resize", onWindowResize, false);
 
+        document.getElementById("startAR").addEventListener("click", loadModel);
+      }
+
+      function loadModel() {
         const loader = new GLTFLoader();
         loader.load(
-          "model/kursi.glb",
+          "./model/kursi.glb",
           function (gltf) {
             model = gltf.scene;
             model.scale.set(0.5, 0.5, 0.5);
+            scene.add(model);
+
+            animate();
           },
           undefined,
           function (error) {
-            console.error(error);
+            console.error("Error loading model:", error);
           }
         );
-
-        controller = renderer.xr.getController(0);
-        controller.addEventListener("select", onSelect);
-        scene.add(controller);
-
-        renderer.setAnimationLoop(render);
+        document.getElementById("startAR").style.display = "none";
       }
 
-      function onSelect() {
-        if (reticle.visible && model) {
-          const clone = model.clone();
-          clone.position.setFromMatrixPosition(reticle.matrix);
-          scene.add(clone);
+      function animate() {
+        requestAnimationFrame(animate);
+
+        if (model) {
+          model.rotation.y += 0.01;
         }
-      }
 
-      function render(timestamp, frame) {
-        if (frame) {
-          const referenceSpace = renderer.xr.getReferenceSpace();
-          const viewerPose = frame.getViewerPose(referenceSpace);
-
-          if (viewerPose) {
-            const hitTestSource = frame.getHitTestResultsForTransientInput ? frame.getHitTestResultsForTransientInput() : frame.getHitTestResults(renderer.xr.getController(0));
-
-            if (hitTestSource.length > 0) {
-              const hit = hitTestSource[0];
-              const pose = hit.getPose(referenceSpace);
-
-              if (pose) {
-                reticle.visible = true;
-                reticle.matrix.fromArray(pose.transform.matrix);
-              }
-            } else {
-              reticle.visible = false;
-            }
-          }
-        }
         renderer.render(scene, camera);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       }
     </script>
   </body>
