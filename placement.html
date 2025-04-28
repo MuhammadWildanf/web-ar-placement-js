@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AR GLB Placement Without Marker</title>
+    <title>AR Placement Without Marker</title>
     <style>
       body {
         margin: 0;
@@ -19,21 +19,19 @@
         height: 100%;
       }
     </style>
-    <!-- Pindahkan script A-Frame ke sini -->
-    <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
   </head>
   <body>
-    <!-- Scene AR.js -->
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
       <!-- Kamera AR.js -->
       <a-camera position="0 0 0"></a-camera>
 
-      <!-- Model GLB yang akan ditampilkan tanpa marker -->
-      <a-entity gltf-model="url(model/kursi.glb)" scale="0.5 0.5 0.5" position="0 0 -3"> </a-entity>
+      <!-- Tempatkan objek 3D berdasarkan koordinat (X, Y, Z) tanpa marker -->
+      <a-box position="0 0 -3" color="red"></a-box>
 
-      <!-- Tambahkan elemen kamera untuk melihat model -->
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
   </body>
 </html>
